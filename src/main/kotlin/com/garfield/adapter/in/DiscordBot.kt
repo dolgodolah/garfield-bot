@@ -1,0 +1,73 @@
+package com.garfield.adapter.`in`
+
+import com.garfield.usecase.port.`in`.BotUseCase
+import com.garfield.usecase.port.`in`.CallUpLolCommand
+import com.garfield.usecase.port.`in`.SayHelloCommand
+import net.dv8tion.jda.api.JDA
+import net.dv8tion.jda.api.JDABuilder
+import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
+import net.dv8tion.jda.api.hooks.ListenerAdapter
+import net.dv8tion.jda.api.interactions.commands.OptionType
+import net.dv8tion.jda.api.interactions.commands.build.Commands
+import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Qualifier
+import org.springframework.beans.factory.annotation.Value
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression
+import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.Configuration
+import org.springframework.stereotype.Component
+
+@Configuration
+class DiscordBot(
+    @Value($$"${discord.bot-token}") private val botToken: String,
+    private val discordBotHandler: DiscordBotHandler
+) {
+
+    private val logger = LoggerFactory.getLogger(DiscordBot::class.java)
+
+    @Bean
+    fun jda(): JDA {
+        logger.info("Starting Discord bot")
+        val jda = JDABuilder.createDefault(botToken)
+            .addEventListeners(discordBotHandler)
+            .build()
+
+        jda.updateCommands()
+            .addCommands(
+                Commands.slash("hello", "인사합니다")
+                    .addOption(OptionType.STRING, "nickname", "닉네임", false),
+                Commands.slash("lol", "훈련 소집")
+                    .addOption(OptionType.STRING, "time", "시작 시간 (예: 1830 또는 18:30)", false),
+            )
+            .queue()
+
+        return jda
+    }
+}
+
+@Component
+class DiscordBotHandler(
+    @Qualifier("discordBotService")
+    private val botUseCase: BotUseCase
+) : ListenerAdapter() {
+
+    override fun onSlashCommandInteraction(event: SlashCommandInteractionEvent) {
+        when (event.name) {
+            "hello" -> {
+                val nickname = event.getOption("nickname")?.asString.orEmpty()
+                val message = botUseCase.sayHello(SayHelloCommand(nickname))
+                event.reply(message).queue()
+            }
+            "lol" -> {
+                val time = event.getOption("time")?.asString
+                val message = botUseCase.callUpLol(
+                    CallUpLolCommand(
+                        nickname = event.user.id,
+                        hhmm = CallUpLolCommand.normalizeHhmm(time)
+                    )
+                )
+                event.reply(message).queue()
+            }
+        }
+    }
+}
