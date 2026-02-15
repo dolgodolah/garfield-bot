@@ -2,6 +2,7 @@ package com.garfield.adapter.`in`
 
 import com.garfield.usecase.port.`in`.BotUseCase
 import com.garfield.usecase.port.`in`.CallUpLolCommand
+import com.garfield.usecase.port.`in`.LolStatsQuery
 import com.garfield.usecase.port.`in`.SayHelloCommand
 import com.slack.api.bolt.App
 import com.slack.api.bolt.AppConfig
@@ -84,6 +85,10 @@ class SlackBotHandler(
             ctx.ack()
         }.command("/lol") { req, ctx ->
             val message = botUseCase.callUpLol(CallUpLolCommand.of(req.payload))
+            req.postMessage(message)
+            ctx.ack()
+        }.command("/stats") { req, ctx ->
+            val message = botUseCase.getLolStats(LolStatsQuery.of(req.payload))
             req.postMessage(message)
             ctx.ack()
         }

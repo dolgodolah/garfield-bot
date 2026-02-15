@@ -2,6 +2,7 @@ package com.garfield.adapter.`in`
 
 import com.garfield.usecase.port.`in`.BotUseCase
 import com.garfield.usecase.port.`in`.CallUpLolCommand
+import com.garfield.usecase.port.`in`.LolStatsQuery
 import com.garfield.usecase.port.`in`.SayHelloCommand
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.JDABuilder
@@ -38,6 +39,9 @@ class DiscordBot(
                     .addOption(OptionType.STRING, "nickname", "닉네임", false),
                 Commands.slash("lol", "훈련 소집")
                     .addOption(OptionType.STRING, "time", "시작 시간 (예: 1830 또는 18:30)", false),
+                Commands.slash("stats", "소환사 전적 조회")
+                    .addOption(OptionType.STRING, "summoner_name", "소환사명 (예: Hide on bush, Hide on bush#KR1)", true)
+                    .addOption(OptionType.STRING, "tag", "태그 (예: KR1)", false),
             )
             .queue()
 
@@ -66,6 +70,17 @@ class DiscordBotHandler(
                         hhmm = CallUpLolCommand.normalizeHhmm(time)
                     )
                 )
+                event.reply(message).queue()
+            }
+            "stats" -> {
+                val summonerName = event.getOption("summoner_name")?.asString.orEmpty()
+                val tagLine = event.getOption("tag")?.asString.orEmpty()
+                val command = if (tagLine.isEmpty()) {
+                    summonerName
+                } else {
+                    "$summonerName#$tagLine"
+                }
+                val message = botUseCase.getLolStats(LolStatsQuery.of(command))
                 event.reply(message).queue()
             }
         }
