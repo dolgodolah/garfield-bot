@@ -6,30 +6,32 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 
 @SpringBootTest
-class RiotGamesClientTest {
+class RiotGamesApiTest {
     @Autowired
-    private lateinit var riotGamesClient: RiotGamesClient
+    private lateinit var riotGamesApi: RiotGamesApiClient
 
     @Test
-    fun getPuuidByRiotId() {
+    fun getRiotAccountByRiotId() {
         val gameName = "Hide on bush"
         val tagLine = "KR1"
 
-        val puuid = riotGamesClient.getPuuidByRiotId(gameName, tagLine)
+        val riotAccountResponse = riotGamesApi.getRiotAccountByRiotId(gameName, tagLine)
 
-        assertNotNull(puuid)
-        assertTrue(puuid.isNotBlank())
+        assertNotNull(riotAccountResponse)
+        assertTrue(riotAccountResponse!!.puuid.isNotBlank())
+        println(riotAccountResponse)
     }
 
     @Test
     fun getLeagueEntriesByPuuid() {
         val gameName = "Hide on bush"
         val tagLine = "KR1"
-        val puuid = riotGamesClient.getPuuidByRiotId(gameName, tagLine)
+        val riotAccountResponse = riotGamesApi.getRiotAccountByRiotId(gameName, tagLine)
 
-        val leagueEntries = riotGamesClient.getLeagueEntriesByPuuid(puuid)
+        val leagueEntries = riotGamesApi.getLeagueEntriesByPuuid(riotAccountResponse!!.puuid)
 
         assertNotNull(leagueEntries)
         assertTrue(leagueEntries.isNotEmpty())
+        println(leagueEntries)
     }
 }
